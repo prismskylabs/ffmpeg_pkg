@@ -49,39 +49,39 @@ class FFMpegConan(ConanFile):
                "videotoolbox": [True, False],
                "securetransport": [True, False],
                "qsv": [True, False]}
-    default_options = {'shared': False,
+    default_options = {'shared': True,
                        'fPIC': True,
-                       'postproc': True,
+                       'postproc': False,
                        'zlib': True,
-                       'bzlib': True,
-                       'lzma': True,
-                       'iconv': True,
-                       'freetype': True,
-                       'openjpeg': True,
-                       'openh264': True,
-                       'opus': True,
-                       'vorbis': True,
+                       'bzlib': False,
+                       'lzma': False,
+                       'iconv': False,
+                       'freetype': False,
+                       'openjpeg': False,
+                       'openh264': False,
+                       'opus': False,
+                       'vorbis': False,
                        'zmq': False,
                        'sdl2': False,
-                       'x264': True,
-                       'x265': True,
-                       'vpx': True,
-                       'mp3lame': True,
-                       'fdk_aac': True,
-                       'webp': True,
+                       'x264': False,
+                       'x265': False,
+                       'vpx': False,
+                       'mp3lame': False,
+                       'fdk_aac': False,
+                       'webp': False,
                        'openssl': True,
-                       'alsa': True,
-                       'pulse': True,
-                       'vaapi': True,
-                       'vdpau': True,
-                       'xcb': True,
-                       'appkit': True,
-                       'avfoundation': True,
-                       'coreimage': True,
-                       'audiotoolbox': True,
-                       'videotoolbox': True,
+                       'alsa': False,
+                       'pulse': False,
+                       'vaapi': False,
+                       'vdpau': False,
+                       'xcb': False,
+                       'appkit': False,
+                       'avfoundation': False,
+                       'coreimage': False,
+                       'audiotoolbox': False,
+                       'videotoolbox': False,
                        'securetransport': False,  # conflicts with OpenSSL
-                       'qsv': True}
+                       'qsv': False}
     generators = "pkg_config"
     _source_subfolder = "source_subfolder"
 
@@ -124,7 +124,7 @@ class FFMpegConan(ConanFile):
             self.options.remove("qsv")
 
     def build_requirements(self):
-        self.build_requires("yasm/1.3.0")
+        #self.build_requires("yasm/1.3.0")
         if tools.os_info.is_windows:
             if "CONAN_BASH_PATH" not in os.environ:
                 self.build_requires("msys2/20190524")
@@ -234,6 +234,8 @@ class FFMpegConan(ConanFile):
                 args.append('--cc=%s' % os.environ['CC'])
             if 'CXX' in os.environ:
                 args.append('--cxx=%s' % os.environ['CXX'])
+            if 'STRIP' in os.environ:
+                args.append('--strip=%s' % os.environ['STRIP'])
             if self._is_msvc:
                 args.append('--toolchain=msvc')
                 args.append('--extra-cflags=-%s' % self.settings.compiler.runtime)
@@ -243,6 +245,25 @@ class FFMpegConan(ConanFile):
 
             if self.settings.arch == 'x86':
                 args.append('--arch=x86')
+            if self.settings.arch == 'x86_64':
+                args.append('--arch=x86_64')
+
+            if str(self.settings.arch).startswith('armv7'):
+                args.append('--arch=arm')
+                args.append('--disable-thumb')
+            if str(self.settings.arch).startswith('armv8'):
+                args.append('--arch=aarch64')
+
+            if self.settings.os == 'Linux':
+                args.append('--target-os=linux')
+
+
+
+            if str(self.settings.arch).startswith('arm'):
+                args.append('--enable-cross-compile')
+                cross_prefix = os.environ["CROSS_COMPILE"] if 'CROSS_COMPILE' in os.environ else ""
+                if len(cross_prefix) > 0:
+                    args.append('--cross-prefix=%s' % cross_prefix)
 
             if self.settings.os != "Windows":
                 args.append('--enable-pic' if self.options.fPIC else '--disable-pic')
