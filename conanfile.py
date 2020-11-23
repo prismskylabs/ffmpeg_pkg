@@ -344,6 +344,8 @@ class FFMpegConan(ConanFile):
 
     def package_info(self):
         libs = ['avdevice', 'avfilter', 'avformat', 'avcodec', 'swresample', 'swscale', 'avutil']
+        # Custom Prism removal of swresample:
+        libs.remove("swresample")
         if self.options.postproc:
             libs.append('postproc')
         if self._is_msvc:
